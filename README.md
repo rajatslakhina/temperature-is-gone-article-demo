@@ -79,8 +79,8 @@ swift build && swift test
 
 ## Verification status
 
-- `swift build -Xswiftc -warnings-as-errors` and `swift test`: passed on Linux (Swift 6.1.2, 35 tests, 0 failures) and in the `library` CI job on macos-15 ([run 41033497209](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41033497209) on `3230cb7`, [run 41037066603](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41037066603) on `65c5e32`).
-- Simulator run: completed by the `demo-on-simulator` CI job in both runs. Each run built `Demo.xcodeproj` for an iPhone Simulator, installed the app, launched it five times with a process-alive check after each launch, and saved the screenshots in `Demo/Screenshots/` (composed into `docs/simulator.png`, first committed in `26316d0`). It was not run by hand in a local Xcode.
+- `swift build -Xswiftc -warnings-as-errors` and `swift test`: passed on Linux (Swift 6.1.2, 35 tests, 0 failures) and in the `library` CI job on macos-15. v1.1.0: [run 41075191451](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41075191451) on `b1d8191`, 35 tests, 0 failures. v1.0.0: [run 41033497209](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41033497209) on `3230cb7` and [run 41037066603](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41037066603) on `65c5e32`.
+- Simulator run: completed by the `demo-on-simulator` CI job in all three runs. Each run built `Demo.xcodeproj` for an iPhone Simulator, installed the app, launched it five times with a process-alive check after each launch, and saved the screenshots in `Demo/Screenshots/`, composed into `docs/simulator.png`. The current screenshots come from the v1.1.0 run (iPhone 17 Pro, commit `49b1c03`). It was not run by hand in a local Xcode.
 
 ## License
 

@@ -5,7 +5,7 @@ Claude API version `2026-10-21` returns a 400 for `temperature`, `top_p` and `to
 1. **`DecisionContract`**: a closed JSON schema, decision rules with ids, worked examples and limits. The system prompt is rendered from it deterministically and fingerprinted (FNV-1a) per version.
 2. **`DecisionValidator`**: deterministic post-validation of what the contract states: shape, types, enum values, the summary limit and cross-field rules ("severity 4 requires a human").
 3. **`ContractPipeline`**: model → validator, with at most 3 attempts (each retry sends the previous violations back), then a deterministic escalation.
-4. **`VarianceEval`**: runs each input N times and reports agreement on the routing decision (category · severity · needs-human), plus unparseable, repaired and escalated counts.
+4. **`VarianceEval`**: runs each input N times and reports agreement on the routing decision (category · severity · needs-human), accuracy against each case's labeled decision, and unparseable, repaired and escalated counts. `changes(since:)` compares two reports, so a new rule only counts as a fix when accuracy moves, not just agreement.
 5. **`LegacyParameterAudit`**: finds and strips the removed sampling parameters in Messages and Message Batch request bodies.
 
 Article: [Claude’s API Now Rejects temperature: 0. It Was Never Your Reliability Strategy.](https://medium.com/@er.rajatlakhina/claudes-api-now-rejects-temperature-0-it-was-never-your-reliability-strategy-2b49cb6a0906) on Medium.
@@ -37,15 +37,25 @@ Wrap your real client by conforming to `ModelClient` (`func complete(_ request: 
 
 8 constructed reviews × 20 runs (`VarianceEval.standardComparison()`):
 
-| Setup | Mean agreement | Cases ≥ 90% | Unparseable | Runs repaired by retry | Escalated |
-|---|---|---|---|---|---|
-| Vague prompt, lenient parser | 51.9% | 0/8 | 20/160 | n/a | n/a |
-| Contract `triage-v1` | 91.2% | 6/8 | 0 | 17 | 0 |
-| Contract `triage-v2` (+`R-money-first`, `R-mixed`) | 99.4% | 8/8 | 0 | 15 | 0 |
+| Setup | Mean agreement | Accuracy vs labels | Cases ≥ 90% | Unparseable | Runs repaired by retry | Escalated |
+|---|---|---|---|---|---|---|
+| Vague prompt, lenient parser | 51.9% | 50.6% | 0/8 | 20/160 | n/a | n/a |
+| Contract `triage-v1` | 91.2% | 91.2% | 6/8 | 0 | 17 | 0 |
+| Contract `triage-v2` (+`R-money-first`, `R-mixed`) | 99.4% | 99.4% | 8/8 | 0 | 15 | 0 |
 
 The v1 eval flagged case 6 ("Cancelled my trial but the app still says Pro. Is that a bug?", 12/20) and case 7 (praise followed by a complaint, 14/20). v2 adds a rule for each. That improvement is built into the simulated model; the point is the loop, not the number.
 
 ![Agreement per case under the three setups](docs/chart.png)
+
+## Agreement is not accuracy
+
+Agreement says a decision is stable, not that it is right. A billing complaint tagged `bug` in 20 of 20 runs scores 100% agreement. (A reader's response on the article made this point, and v1.1.0 is the result.) So every case carries a labeled decision, and the eval reports both numbers:
+
+- `CaseReport.accuracy`: share of runs that returned the labeled decision. Invalid runs count as wrong.
+- `VarianceReport.stableButWrongCases()`: agreement at or above the bar, but the most common answer is not the label. Agreement alone would call these solved.
+- `VarianceReport.changes(since:)`: per case, `fixed` (accuracy up, agreement not down), `stabilizedOnly` (agreement up, accuracy not), `regressed` or `unchanged`.
+
+In the bundled run, the vague prompt's most common answer is wrong for two reviews: the cancelled trial (`bug · s2 · auto`, 7 of 20, where the label is `billing · s2 · human`) and slow iPad sync. Comparing v2 with v1 marks exactly the two cases the new rules target (6 and 7) as `fixed`. Under both contracts the simulated model's most common answer is also the labeled one, so accuracy equals agreement there. With a real model they can diverge, and that gap is the thing to watch. `testStableButWrongIsCaughtByAccuracy` covers the 20-of-20-wrong case directly.
 
 ## Simulator
 
@@ -69,7 +79,7 @@ swift build && swift test
 
 ## Verification status
 
-- `swift build -Xswiftc -warnings-as-errors` and `swift test`: passed on Linux (Swift 6.1.2, 32 tests, 0 failures) and in the `library` CI job on macos-15 ([run 41033497209](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41033497209) on `3230cb7`, [run 41037066603](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41037066603) on `65c5e32`).
+- `swift build -Xswiftc -warnings-as-errors` and `swift test`: passed on Linux (Swift 6.1.2, 35 tests, 0 failures) and in the `library` CI job on macos-15 ([run 41033497209](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41033497209) on `3230cb7`, [run 41037066603](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41037066603) on `65c5e32`).
 - Simulator run: completed by the `demo-on-simulator` CI job in both runs. Each run built `Demo.xcodeproj` for an iPhone Simulator, installed the app, launched it five times with a process-alive check after each launch, and saved the screenshots in `Demo/Screenshots/` (composed into `docs/simulator.png`, first committed in `26316d0`). It was not run by hand in a local Xcode.
 
 ## License

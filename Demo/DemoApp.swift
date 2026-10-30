@@ -52,6 +52,7 @@ struct VarianceView: View {
                     Section {
                         HStack {
                             Metric(value: String(format: "%.0f%%", report.meanAgreement * 100), label: "mean agreement")
+                            Metric(value: String(format: "%.0f%%", report.meanAccuracy * 100), label: "accuracy vs labels")
                             Metric(value: "\(report.stableCaseCount)/\(report.cases.count)", label: "cases ≥ 90%")
                         }
                         HStack {
@@ -60,7 +61,7 @@ struct VarianceView: View {
                             Metric(value: "\(report.totalFallback)", label: "escalated")
                         }
                     } footer: {
-                        Text("8 constructed reviews × 20 seeded runs on a simulated model. Agreement = share of runs returning the most common category · severity · routing.")
+                        Text("8 constructed reviews × 20 seeded runs on a simulated model. Agreement = share of runs returning the most common category · severity · routing. Accuracy = share matching the labeled decision.")
                     }
                     Section("Per case") {
                         ForEach(report.cases) { item in
@@ -106,18 +107,26 @@ struct CaseRow: View {
             }
             ProgressView(value: item.agreement)
                 .tint(stable ? .green : .orange)
+            Text(item.invalidCount > 0
+                 ? "\(item.correctCount)/\(item.runs) match the label · \(item.invalidCount) unparseable"
+                 : "\(item.correctCount)/\(item.runs) match the label")
+                .font(.caption2.monospacedDigit())
+                .foregroundStyle(item.modalIsCorrect ? Color.secondary : Color.red)
             HStack(spacing: 8) {
                 Text(item.modalKey?.description ?? "no valid answer")
                     .font(.caption.monospaced())
                     .foregroundStyle(.secondary)
+                if item.modalKey != nil && !item.modalIsCorrect {
+                    Text("wrong answer wins").font(.caption2.weight(.bold))
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Color.red.opacity(0.15), in: Capsule())
+                        .foregroundStyle(.red)
+                }
                 if !stable {
                     Text("needs a rule").font(.caption2.weight(.bold))
                         .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(Color.orange.opacity(0.18), in: Capsule())
                         .foregroundStyle(.orange)
-                }
-                if item.invalidCount > 0 {
-                    Text("\(item.invalidCount) unparseable").font(.caption2).foregroundStyle(.red)
                 }
             }
         }

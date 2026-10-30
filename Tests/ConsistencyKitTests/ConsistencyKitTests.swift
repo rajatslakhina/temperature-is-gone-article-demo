@@ -227,9 +227,57 @@ final class EvalTests: XCTestCase {
         XCTAssertEqual(report.cases.first?.distinctKeys, 2)
     }
 
+    func testStableButWrongIsCaughtByAccuracy() async throws {
+        let billing = SampleCase.all[1]
+        let wrong = DecisionKey(category: .bug, severity: 3, needsHuman: false)
+        let report = await VarianceEval.evaluate(label: "t", cases: [billing], runs: 20) { _, _ in
+            .decided(wrong, attempts: 1, fallback: false)
+        }
+        let item = try XCTUnwrap(report.cases.first)
+        XCTAssertEqual(item.agreement, 1.0)
+        XCTAssertEqual(item.accuracy, 0.0)
+        XCTAssertFalse(item.modalIsCorrect)
+        XCTAssertEqual(report.stableButWrongCases().map(\.id), [billing.id])
+        XCTAssertTrue(report.unstableCases().isEmpty, "agreement alone calls this solved")
+    }
+
+    func testAccuracyCountsInvalidRunsAsWrong() async {
+        let item = SampleCase.all[0]
+        let report = await VarianceEval.evaluate(label: "t", cases: [item], runs: 4) { _, run in
+            run == 0 ? .decided(item.expected.key, attempts: 1, fallback: false) : .invalid
+        }
+        XCTAssertEqual(report.cases.first?.accuracy, 0.25)
+        XCTAssertEqual(report.cases.first?.correctCount, 1)
+    }
+
+    func testChangeVerdictsNeedAccuracyToCallAFix() async {
+        let cases = Array(SampleCase.all.prefix(3))
+        let wrong = DecisionKey(category: .other, severity: 2, needsHuman: false)
+        // Case 1: wrong and stable -> right and stable. Case 2: wrong and noisy -> wrong and stable.
+        // Case 3: right -> wrong.
+        let before = await VarianceEval.evaluate(label: "before", cases: cases, runs: 10) { item, run in
+            switch item.id {
+            case 1: return .decided(wrong, attempts: 1, fallback: false)
+            case 2: return .decided(run.isMultiple(of: 2) ? wrong : DecisionKey(category: .bug, severity: 1, needsHuman: false), attempts: 1, fallback: false)
+            default: return .decided(item.expected.key, attempts: 1, fallback: false)
+            }
+        }
+        let after = await VarianceEval.evaluate(label: "after", cases: cases, runs: 10) { item, _ in
+            switch item.id {
+            case 1: return .decided(item.expected.key, attempts: 1, fallback: false)
+            default: return .decided(wrong, attempts: 1, fallback: false)
+            }
+        }
+        let verdicts = Dictionary(after.changes(since: before).map { ($0.id, $0.verdict) }, uniquingKeysWith: { first, _ in first })
+        XCTAssertEqual(verdicts[1], .fixed)
+        XCTAssertEqual(verdicts[2], .stabilizedOnly)
+        XCTAssertEqual(verdicts[3], .regressed)
+    }
+
     func testZeroRunsDoesNotDivideByZero() async {
         let report = await VarianceEval.evaluate(label: "t", cases: SampleCase.all, runs: 0) { _, _ in .invalid }
         XCTAssertEqual(report.meanAgreement, 0)
+        XCTAssertEqual(report.meanAccuracy, 0)
         XCTAssertEqual(report.fallbackRate, 0)
     }
 
@@ -242,12 +290,16 @@ final class EvalTests: XCTestCase {
         XCTAssertLessThan(first[1].meanAgreement, first[2].meanAgreement)
         XCTAssertGreaterThan(first[1].unstableCases().count, first[2].unstableCases().count)
         XCTAssertEqual(first[1].totalInvalid, 0, "the pipeline never returns an unparseable answer")
+        XCTAssertLessThan(first[0].meanAccuracy, first[1].meanAccuracy)
+        XCTAssertLessThan(first[1].meanAccuracy, first[2].meanAccuracy)
+        let fixes = first[2].changes(since: first[1]).filter { $0.verdict == .fixed }.map(\.id)
+        XCTAssertEqual(Set(fixes), [6, 7], "v2's two rules fix the two cases the v1 eval flagged")
 
         for report in first {
-            print("REPORT \(report.label): mean=\(String(format: "%.3f", report.meanAgreement)) stable=\(report.stableCaseCount)/\(report.cases.count) invalid=\(report.totalInvalid) retried=\(report.totalRetried) fallback=\(report.totalFallback) runs=\(report.totalRuns)")
+            print("REPORT \(report.label): mean=\(String(format: "%.3f", report.meanAgreement)) accuracy=\(String(format: "%.3f", report.meanAccuracy)) stable=\(report.stableCaseCount)/\(report.cases.count) stableButWrong=\(report.stableButWrongCases().map(\.id)) invalid=\(report.totalInvalid) retried=\(report.totalRetried) fallback=\(report.totalFallback) runs=\(report.totalRuns)")
             for c in report.cases {
                 let dist = c.counts.sorted { $0.value > $1.value }.map { "\($0.key)=\($0.value)" }.joined(separator: ", ")
-                print("  case \(c.id) \(c.title): \(c.modalCount)/\(c.runs) modal=\(c.modalKey?.description ?? "-") invalid=\(c.invalidCount) fb=\(c.fallbackCount) retried=\(c.retriedRuns) [\(dist)]")
+                print("  case \(c.id) \(c.title): \(c.modalCount)/\(c.runs) correct=\(c.correctCount)/\(c.runs) modalCorrect=\(c.modalIsCorrect) modal=\(c.modalKey?.description ?? "-") invalid=\(c.invalidCount) fb=\(c.fallbackCount) retried=\(c.retriedRuns) [\(dist)]")
             }
         }
         print("FINGERPRINT v1=\(DecisionContract.triageV1.fingerprint) v2=\(DecisionContract.triageV2.fingerprint)")

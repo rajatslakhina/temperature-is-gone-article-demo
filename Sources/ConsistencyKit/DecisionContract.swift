@@ -26,8 +26,8 @@ public struct WorkedExample: Hashable, Sendable {
 
 /// Everything that used to hide behind `temperature: 0`, written down:
 /// an output schema, explicit rules, worked examples and limits.
-/// The same contract feeds the prompt and the validator, so the code enforces
-/// exactly what the prompt asks for.
+/// The prompt is rendered from it, and the validator enforces the parts code
+/// can check: shape, enum, limits and cross-field rules.
 public struct DecisionContract: Hashable, Sendable {
     public let version: String
     public let rules: [DecisionRule]
@@ -141,7 +141,7 @@ public extension DecisionContract {
         version: "triage-v2",
         rules: [
             DecisionRule(id: "R-money-first", text: "Anything about charges, trials, subscriptions or refunds is billing, even if the user calls it a bug. Severity 3 if money was taken wrongly, otherwise 2; needs_human true."),
-            DecisionRule(id: "R-mixed", text: "Praise plus a complaint: classify by the complaint, never as praise."),
+            DecisionRule(id: "R-mixed", text: "Praise plus a complaint: classify and rate by the complaint, never as praise. A feature that damages content without losing it (formatting, layout) is bug, severity 3, needs_human false."),
         ] + baseRules,
         examples: baseExamples + [
             WorkedExample(

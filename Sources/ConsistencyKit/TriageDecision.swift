@@ -13,7 +13,7 @@ public enum ReviewCategory: String, CaseIterable, Codable, Hashable, Sendable {
 /// The typed output of one triage call.
 public struct TriageDecision: Codable, Hashable, Sendable {
     public var category: ReviewCategory
-    /// 1 (cosmetic) ... 4 (data loss, crash on launch, money taken wrongly).
+    /// 1 (cosmetic) ... 4 (crash or lost user data; bugs only).
     public var severity: Int
     public var needsHuman: Bool
     /// Free text. Allowed to vary between runs; it is not part of the decision key.

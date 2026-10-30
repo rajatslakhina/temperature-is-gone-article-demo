@@ -2,9 +2,9 @@
 
 Claude API version `2026-10-21` returns a 400 for `temperature`, `top_p` and `top_k`, even at their default values ([migration guide](https://platform.claude.com/docs/en/api/migration-2026-10-21)). If `temperature: 0` was your reliability strategy, this package is what replaces it:
 
-1. **`DecisionContract`**: a closed JSON schema, numbered decision rules, worked examples and limits. The system prompt is rendered from it deterministically and fingerprinted (FNV-1a) per version.
-2. **`DecisionValidator`**: deterministic post-validation driven by the same contract: shape, types, enum values, the summary limit and cross-field rules ("severity 4 requires a human").
-3. **`ContractPipeline`**: model → validator, with at most 3 repair attempts that send the violations back, then a deterministic escalation.
+1. **`DecisionContract`**: a closed JSON schema, decision rules with ids, worked examples and limits. The system prompt is rendered from it deterministically and fingerprinted (FNV-1a) per version.
+2. **`DecisionValidator`**: deterministic post-validation of what the contract states: shape, types, enum values, the summary limit and cross-field rules ("severity 4 requires a human").
+3. **`ContractPipeline`**: model → validator, with at most 3 attempts (each retry sends the previous violations back), then a deterministic escalation.
 4. **`VarianceEval`**: runs each input N times and reports agreement on the routing decision (category · severity · needs-human), plus unparseable, repaired and escalated counts.
 5. **`LegacyParameterAudit`**: finds and strips the removed sampling parameters in Messages and Message Batch request bodies.
 
@@ -43,13 +43,13 @@ Wrap your real client by conforming to `ModelClient` (`func complete(_ request: 
 | Contract `triage-v1` | 91.2% | 6/8 | 0 | 17 | 0 |
 | Contract `triage-v2` (+`R-money-first`, `R-mixed`) | 99.4% | 8/8 | 0 | 15 | 0 |
 
-The v1 eval flagged case 6 ("Cancelled my trial but the app still says Pro. Is that a bug?", 12/20) and case 7 (praise followed by a complaint, 14/20). v2 adds a rule for each. That improvement is built into the simulator; the point is the loop, not the number.
+The v1 eval flagged case 6 ("Cancelled my trial but the app still says Pro. Is that a bug?", 12/20) and case 7 (praise followed by a complaint, 14/20). v2 adds a rule for each. That improvement is built into the simulated model; the point is the loop, not the number.
 
 ![Agreement per case under the three setups](docs/chart.png)
 
 ## Simulator
 
-![Demo app on the iOS Simulator](docs/simulator.png)
+![Three iPhone Simulator screenshots of the Variance tab, captured by CI: vague prompt 52%, contract v1 91%, contract v2 99%](docs/simulator.png)
 
 The demo app has three tabs: **Variance** (the table above, live), **Runs** (one review, 10 runs, first raw answer → verdict) and **Audit** (a legacy request, its 400 findings and the migrated body).
 
@@ -69,8 +69,8 @@ swift build && swift test
 
 ## Verification status
 
-- `swift build -Xswiftc -warnings-as-errors` and `swift test` (32 tests, 0 failures): passed on Linux, Swift 6.1.2.
-- Simulator run: performed by the `demo-on-simulator` job in `.github/workflows/ci.yml` (build, install, five launches with a process-alive check, screenshots in `Demo/Screenshots/`). **Pending: the job runs on the first push.** Until it has run, `docs/simulator.png` does not exist and the image above will not render.
+- `swift build -Xswiftc -warnings-as-errors` and `swift test`: passed on Linux (Swift 6.1.2, 32 tests, 0 failures) and in the `library` CI job on macos-15.
+- Simulator run: completed by the `demo-on-simulator` CI job ([run 41033497209](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41033497209), commit `3230cb7`). It built `Demo.xcodeproj` for an iPhone Simulator, installed the app, launched it five times with a process-alive check after each launch, and saved the screenshots in `Demo/Screenshots/` (composed into `docs/simulator.png`). It was not run by hand in a local Xcode.
 
 ## License
 

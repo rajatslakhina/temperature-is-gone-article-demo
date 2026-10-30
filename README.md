@@ -8,7 +8,7 @@ Claude API version `2026-10-21` returns a 400 for `temperature`, `top_p` and `to
 4. **`VarianceEval`**: runs each input N times and reports agreement on the routing decision (category · severity · needs-human), plus unparseable, repaired and escalated counts.
 5. **`LegacyParameterAudit`**: finds and strips the removed sampling parameters in Messages and Message Batch request bodies.
 
-Article: (added after publish)
+Article: [Claude’s API Now Rejects temperature: 0. It Was Never Your Reliability Strategy.](https://medium.com/@er.rajatlakhina/claudes-api-now-rejects-temperature-0-it-was-never-your-reliability-strategy-2b49cb6a0906) on Medium.
 
 ![Diagram: the contract feeds the prompt and the validator; invalid answers retry with their violations up to 3 times, then escalate; the variance eval turns unstable cases into new rules.](docs/diagram.png)
 
@@ -69,8 +69,8 @@ swift build && swift test
 
 ## Verification status
 
-- `swift build -Xswiftc -warnings-as-errors` and `swift test`: passed on Linux (Swift 6.1.2, 32 tests, 0 failures) and in the `library` CI job on macos-15.
-- Simulator run: completed by the `demo-on-simulator` CI job ([run 41033497209](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41033497209), commit `3230cb7`). It built `Demo.xcodeproj` for an iPhone Simulator, installed the app, launched it five times with a process-alive check after each launch, and saved the screenshots in `Demo/Screenshots/` (composed into `docs/simulator.png`). It was not run by hand in a local Xcode.
+- `swift build -Xswiftc -warnings-as-errors` and `swift test`: passed on Linux (Swift 6.1.2, 32 tests, 0 failures) and in the `library` CI job on macos-15 ([run 41033497209](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41033497209) on `3230cb7`, [run 41037066603](https://github.com/rajatslakhina/temperature-is-gone-article-demo/actions/runs/41037066603) on `65c5e32`).
+- Simulator run: completed by the `demo-on-simulator` CI job in both runs. Each run built `Demo.xcodeproj` for an iPhone Simulator, installed the app, launched it five times with a process-alive check after each launch, and saved the screenshots in `Demo/Screenshots/` (composed into `docs/simulator.png`, first committed in `26316d0`). It was not run by hand in a local Xcode.
 
 ## License
 

@@ -1,0 +1,30 @@
+<html><body style="margin:0;width:1600px;height:900px;background:#ffffff;font-family:Inter,-apple-system,'Helvetica Neue',Arial,sans-serif;color:#0f172a;position:relative">
+<div style="position:absolute;left:60px;top:36px;font-size:38px;font-weight:800">Same review, 20 runs: how often is the decision the same?</div>
+<div style="position:absolute;left:60px;top:92px;font-size:22px;color:#475569">Share of runs returning the most common category · severity · routing. Seeded simulated model, 8 constructed reviews.</div>
+<div id="legend" style="position:absolute;left:60px;top:140px;display:flex;gap:30px;font-size:22px">
+ <span><span style="display:inline-block;width:18px;height:18px;background:#fb923c;border-radius:4px"></span> vague prompt</span>
+ <span><span style="display:inline-block;width:18px;height:18px;background:#facc15;border-radius:4px"></span> contract v1</span>
+ <span><span style="display:inline-block;width:18px;height:18px;background:#16a34a;border-radius:4px"></span> contract v2</span>
+ <span style="color:#64748b">dashed line = 90% bar</span>
+</div>
+<div id="rows" style="position:absolute;left:60px;top:200px;width:1480px"></div>
+<script>
+const data = [{"id": 1, "title": "Crash opening a shared note", "values": [9, 20, 20]}, {"id": 2, "title": "Charged twice for Pro", "values": [14, 20, 20]}, {"id": 3, "title": "Dark mode for the widget", "values": [14, 20, 20]}, {"id": 4, "title": "Instant sync praise", "values": [11, 20, 20]}, {"id": 5, "title": "Slow iPad sync", "values": [6, 20, 20]}, {"id": 6, "title": "Trial cancelled, still Pro", "values": [7, 12, 20]}, {"id": 7, "title": "Praise, then lost formatting", "values": [7, 14, 19]}, {"id": 8, "title": "Keyboard test", "values": [15, 20, 20]}];
+const rows = document.getElementById('rows');
+const colors = ['#fb923c','#facc15','#16a34a'];
+const barMax = 900;
+data.forEach(d => {
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;height:80px;border-bottom:1px solid #e2e8f0;position:relative';
+  row.innerHTML = `<div style="width:420px;font-size:22px;font-weight:600">${d.id}. ${d.title}</div>`;
+  const bars = document.createElement('div');
+  bars.style.cssText = 'position:relative;width:'+(barMax+80)+'px';
+  d.values.forEach((v,i) => {
+    bars.innerHTML += `<div style="display:flex;align-items:center;height:20px;margin:2px 0"><div style="flex-shrink:0;width:${v/20*barMax}px;height:18px;background:${colors[i]};border-radius:3px"></div><span style="font-size:16px;margin-left:8px;color:#334155">${v}/20</span></div>`;
+  });
+  bars.innerHTML += `<div style="position:absolute;left:${0.9*barMax}px;top:-6px;height:80px;border-left:2px dashed #64748b"></div>`;
+  row.appendChild(bars);
+  rows.appendChild(row);
+});
+</script>
+</body></html>

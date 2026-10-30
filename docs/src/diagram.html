@@ -1,0 +1,30 @@
+<html><body style="margin:0;width:1600px;height:900px;background:#ffffff;font-family:Inter,-apple-system,'Helvetica Neue',Arial,sans-serif;color:#0f172a;position:relative">
+<div style="position:absolute;left:60px;top:40px;font-size:40px;font-weight:800">What replaces temperature: 0</div>
+<div style="position:absolute;left:60px;top:98px;font-size:24px;color:#475569">One contract feeds the prompt and the validator. The eval tells you which rule to write next.</div>
+
+<div style="position:absolute;left:60px;top:190px;width:360px;height:420px;border-radius:20px;background:#0f172a;color:#f8fafc;padding:28px;box-sizing:border-box">
+ <div style="font-family:'DejaVu Sans Mono',Menlo,monospace;font-size:28px;font-weight:700;color:#38bdf8">DecisionContract</div>
+ <div style="font-size:22px;margin-top:20px;line-height:1.7;color:#cbd5e1">• closed JSON schema,<br>&nbsp;&nbsp;5-value enum<br>• rules with ids, in order<br>• worked examples<br>• limits (summary ≤ 80)<br>• fingerprint per version</div>
+</div>
+<div style="position:absolute;left:430px;top:300px;font-size:56px;color:#94a3b8">→</div>
+<div style="position:absolute;left:500px;top:250px;width:250px;height:150px;border:3px solid #cbd5e1;border-radius:18px;padding:20px;box-sizing:border-box">
+ <div style="font-size:26px;font-weight:700">Model</div>
+ <div style="font-size:20px;color:#475569;margin-top:8px">default sampling<br>no temperature</div>
+</div>
+<div style="position:absolute;left:760px;top:300px;font-size:56px;color:#94a3b8">→</div>
+<div style="position:absolute;left:830px;top:230px;width:330px;height:190px;border:3px solid #0d9488;border-radius:18px;padding:20px;box-sizing:border-box;background:#f0fdfa">
+ <div style="font-family:'DejaVu Sans Mono',Menlo,monospace;font-size:24px;font-weight:700;color:#0f766e">DecisionValidator</div>
+ <div style="font-size:20px;color:#334155;margin-top:10px;line-height:1.45">shape, types, enum, limits,<br>cross-field rules<br><b>checks shape, not judgment</b></div>
+</div>
+<div style="position:absolute;left:1180px;top:220px;width:370px;display:flex;flex-direction:column;gap:14px;font-size:22px">
+ <div style="border-left:10px solid #16a34a;background:#f0fdf4;padding:14px 18px;border-radius:10px"><b>valid → accept</b></div>
+ <div style="border-left:10px solid #ea580c;background:#fff7ed;padding:14px 18px;border-radius:10px"><b>invalid → retry with the violations</b><br><span style="font-size:18px;color:#475569">at most 3 attempts</span></div>
+ <div style="border-left:10px solid #dc2626;background:#fef2f2;padding:14px 18px;border-radius:10px"><b>budget spent → escalate</b><br><span style="font-size:18px;color:#475569">deterministic fallback, counted</span></div>
+</div>
+<div style="position:absolute;left:500px;top:560px;width:1050px;height:180px;border:3px dashed #7c3aed;border-radius:20px;padding:24px;box-sizing:border-box;background:#faf5ff">
+ <div style="font-family:'DejaVu Sans Mono',Menlo,monospace;font-size:26px;font-weight:700;color:#6d28d9">VarianceEval</div>
+ <div style="font-size:22px;color:#334155;margin-top:10px;line-height:1.5">same input × N runs → agreement on category · severity · routing (summary may vary)<br>cases under 90% → <b>write a rule or an example</b>, not a lower temperature</div>
+</div>
+<div style="position:absolute;left:80px;top:650px;width:330px;font-size:22px;color:#6d28d9;font-weight:700;text-align:center">↑ eval result becomes a new rule → new fingerprint</div>
+<div style="position:absolute;left:60px;top:800px;font-size:20px;color:#64748b">ConsistencyKit · github.com/rajatslakhina/temperature-is-gone-article-demo</div>
+</body></html>
